@@ -14,3 +14,9 @@ Files:
 - prism-icon.svg  favicon, app icon, and touch icon
 - manifest.json   installable web-app metadata
 - sw.js           offline shell cache
+
+MAC APP PACKAGE
+
+The Mac launcher is a plain executable bundle and does not use AppleScript or AppleScriptObjC. This prevents the OSAID selector error from the previous wrapper. The current downloadable package is built as PixelPlayer.app and opens the player in a dedicated Chrome app window.
+
+If macOS blocks the app on first launch, right-click PixelPlayer.app, choose Open, then choose Open again.
