@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0c1014" />
+  <meta name="application-name" content="Prism" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Prism" />
+  <link rel="icon" type="image/svg+xml" href="prism-icon.svg" />
+  <link rel="apple-touch-icon" href="prism-icon.svg" />
+  <link rel="manifest" href="manifest.json" />
+  <title>Prism — local video player</title>
+  <style>
+    :root {
+      --ink: #f4f5f2;
+      --muted: #a9b1ae;
+      --dim: #68736f;
+      --bg: #0c1014;
+      --line: rgba(220, 241, 232, .16);
+      --line-hi: rgba(220, 241, 232, .3);
+      --cyan: #8ce9de;
+      --rose: #f1a2b9;
+      --acid: #d9f27d;
+      --display: Georgia, 'Times New Roman', serif;
+      --mono: 'DM Mono', 'SFMono-Regular', Consolas, monospace;
+      --sans: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      --shadow: 0 25px 70px rgba(0, 0, 0, .28);
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; }
+    body { color: var(--ink); background: var(--bg); font-family: var(--sans); overflow-x: hidden; }
+    body::before { content: ''; position: fixed; inset: 0; z-index: -2; pointer-events: none; background: radial-gradient(ellipse at 18% 8%, rgba(140,233,222,.12), transparent 35%), radial-gradient(ellipse at 86% 79%, rgba(241,162,185,.10), transparent 32%), linear-gradient(135deg, #10161a 0%, #0c1014 52%, #101316 100%); }
+    body::after { content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none; opacity: .045; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 160 160' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='grain'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.84' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23grain)'/%3E%3C/svg%3E"); }
+    button, input { font: inherit; }
+    button { border: 0; color: inherit; cursor: pointer; }
+    .shell { width: min(1480px, calc(100% - 44px)); margin: 0 auto; padding: 24px 0 38px; }
+    .topbar { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; padding: 0 4px 23px; border-bottom: 1px solid var(--line); }
+    .wordmark { display: flex; align-items: baseline; gap: 14px; }
+    .wordmark strong { font-size: 20px; font-weight: 700; letter-spacing: .19em; }
+    .wordmark span, .top-note { color: var(--dim); font: 10px var(--mono); letter-spacing: .12em; text-transform: uppercase; }
+    .top-note { text-align: right; line-height: 1.7; }
+    .top-note b { color: var(--acid); font-weight: 500; }
+    .download-link { display: inline-block; margin-top: 8px; padding: 8px 10px; border: 1px solid var(--line-hi); border-radius: 3px; color: var(--ink); background: rgba(220,241,232,.08); font: 10px var(--mono); letter-spacing: .04em; text-decoration: none; text-transform: uppercase; }
+    .download-link:hover { background: rgba(220,241,232,.17); transform: translateY(-1px); }
+    .layout { display: grid; grid-template-columns: minmax(0, 1fr) 326px; gap: 22px; margin-top: 22px; align-items: start; }
+    .main { min-width: 0; display: grid; gap: 22px; }
+    .glass { position: relative; overflow: hidden; border: 1px solid var(--line); background: linear-gradient(148deg, rgba(255,255,255,.09), rgba(255,255,255,.025) 45%, rgba(255,255,255,.055)); box-shadow: var(--shadow), inset 0 1px 0 rgba(255,255,255,.13); backdrop-filter: blur(28px) saturate(125%); }
+    .glass::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(120deg, rgba(255,255,255,.11), transparent 18%, transparent 78%, rgba(255,255,255,.045)); opacity: .6; }
+    .player { padding: 11px; border-radius: 18px; }
+    .stage { position: relative; min-height: min(64vh, 650px); overflow: hidden; background: #080b0d; border: 1px solid rgba(220,241,232,.12); }
+    .stage::before { content: ''; position: absolute; width: 60vw; height: 60vw; max-width: 720px; max-height: 720px; left: 27%; top: 25%; border-radius: 47% 53% 61% 39% / 43% 42% 58% 57%; background: radial-gradient(circle at 29% 22%, rgba(255,255,255,.8), transparent 8%), linear-gradient(120deg, rgba(140,233,222,.78), rgba(110,166,155,.25) 37%, rgba(241,162,185,.55)); filter: blur(24px); opacity: .65; transform: rotate(-18deg); animation: drift 15s ease-in-out infinite alternate; }
+    .stage::after { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 55% 37%, transparent 10%, rgba(5,8,10,.08) 46%, rgba(5,8,10,.72) 100%); pointer-events: none; }
+    @keyframes drift { to { transform: rotate(-6deg) translate(35px, -14px) scale(1.08); } }
+    .stage-head { position: absolute; z-index: 2; inset: 18px 20px auto; display: flex; justify-content: space-between; color: var(--dim); font: 10px var(--mono); letter-spacing: .1em; text-transform: uppercase; }
+    .stage-head b { color: var(--cyan); font-weight: 500; }
+    .video { position: absolute; z-index: 1; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+    .empty-state { position: absolute; z-index: 2; left: clamp(24px, 7vw, 100px); bottom: 112px; max-width: 420px; }
+    .empty-state .kicker { color: var(--cyan); font: 11px var(--mono); letter-spacing: .13em; text-transform: uppercase; }
+    .empty-state h1 { margin: 15px 0 10px; font: 400 clamp(42px, 6vw, 82px)/.88 var(--display); letter-spacing: -.07em; }
+    .empty-state p { max-width: 300px; margin: 0; color: var(--muted); font-size: 14px; line-height: 1.55; }
+    .empty-state button { margin-top: 22px; padding: 11px 15px; border: 1px solid var(--line-hi); border-radius: 4px; background: rgba(220,241,232,.1); font-size: 12px; }
+    .empty-state button:hover { background: rgba(220,241,232,.18); transform: translateY(-1px); }
+    .controls { position: absolute; z-index: 4; left: 19px; right: 19px; bottom: 17px; }
+    .scrub { position: relative; height: 20px; display: flex; align-items: center; cursor: pointer; }
+    .scrub-track { width: 100%; height: 3px; background: rgba(244,245,242,.23); }
+    .scrub-progress { position: relative; width: 0; height: 100%; background: var(--cyan); box-shadow: 0 0 13px rgba(140,233,222,.7); }
+    .scrub-progress::after { content: ''; position: absolute; top: 50%; right: -5px; width: 10px; height: 10px; border-radius: 50%; background: var(--ink); transform: translateY(-50%); box-shadow: 0 0 0 3px rgba(140,233,222,.22); }
+    .control-row { display: flex; align-items: center; gap: 7px; margin-top: 8px; }
+    .control { width: 34px; height: 31px; display: grid; place-items: center; border-radius: 4px; color: var(--muted); background: transparent; }
+    .control:hover { color: var(--ink); background: rgba(220,241,232,.1); }
+    .control svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+    .play { width: 37px; height: 34px; background: var(--cyan); color: #10201f; border-radius: 4px; }
+    .play:hover { color: #10201f; background: var(--ink); }
+    .play svg { width: 16px; height: 16px; fill: currentColor; stroke: none; }
+    .time { margin-left: 5px; color: var(--muted); font: 10px var(--mono); white-space: nowrap; }
+    .grow { flex: 1; }
+    .volume { display: flex; align-items: center; gap: 6px; width: 116px; }
+    input[type=range] { appearance: none; width: 100%; height: 3px; border-radius: 999px; background: rgba(244,245,242,.22); outline: none; }
+    input[type=range]::-webkit-slider-thumb { appearance: none; width: 10px; height: 10px; border-radius: 50%; background: var(--ink); cursor: pointer; }
+    .speed { width: auto; min-width: 38px; font: 10px var(--mono); }
+    .details { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; align-items: end; padding: 17px 7px 4px; }
+    .details h2 { margin: 0 0 5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 400 27px/1.05 var(--display); letter-spacing: -.05em; }
+    .details p { margin: 0; color: var(--muted); font-size: 12px; }
+    .shortcut { color: var(--dim); font: 10px var(--mono); text-align: right; line-height: 1.8; }
+    kbd { padding: 2px 4px; border: 1px solid var(--line); border-radius: 3px; color: var(--muted); }
+    .lower { display: grid; grid-template-columns: 1.1fr .9fr; gap: 22px; }
+    .panel { padding: 18px; border-radius: 12px; }
+    .panel-head { position: relative; z-index: 1; display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 16px; }
+    .panel-head h3 { margin: 0; font-size: 13px; font-weight: 600; letter-spacing: .02em; }
+    .panel-head span { color: var(--dim); font: 10px var(--mono); letter-spacing: .1em; text-transform: uppercase; }
+    .visualizer { position: relative; z-index: 1; display: flex; gap: 3px; align-items: center; height: 93px; padding: 0 5px; overflow: hidden; }
+    .visualizer i { flex: 1; min-width: 2px; height: 16%; background: linear-gradient(180deg, var(--cyan), rgba(140,233,222,.15)); transform-origin: center; animation: level 1.2s ease-in-out infinite alternate; animation-delay: calc(var(--n) * -70ms); }
+    .visualizer.paused i { height: 9%; opacity: .35; animation-play-state: paused; }
+    @keyframes level { to { height: var(--level); } }
+    .metric-line { position: relative; z-index: 1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; padding-top: 11px; border-top: 1px solid var(--line); }
+    .metric strong { display: block; font: 14px var(--mono); font-weight: 500; }
+    .metric span { display: block; margin-top: 4px; color: var(--dim); font: 9px var(--mono); letter-spacing: .1em; text-transform: uppercase; }
+    .drop { position: relative; z-index: 1; min-height: 137px; display: grid; place-items: center; text-align: center; border: 1px dashed rgba(140,233,222,.38); background: rgba(140,233,222,.035); transition: .2s; }
+    .drop.dragging { background: rgba(140,233,222,.13); border-color: var(--cyan); }
+    .drop svg { width: 23px; height: 23px; margin-bottom: 9px; color: var(--cyan); fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+    .drop strong { display: block; font-size: 12px; font-weight: 500; }
+    .drop small { display: block; margin-top: 5px; color: var(--dim); font-size: 11px; }
+    .drop button { margin-top: 13px; padding: 9px 11px; border: 1px solid var(--line-hi); border-radius: 3px; background: transparent; font-size: 11px; }
+    .drop button:hover { background: rgba(220,241,232,.12); }
+    .rail { display: grid; gap: 22px; position: sticky; top: 20px; }
+    .library { padding: 18px 12px 12px; border-radius: 12px; }
+    .library .panel-head { padding: 0 7px; }
+    .library-count { color: var(--cyan); }
+    .queue { position: relative; z-index: 1; display: grid; gap: 3px; }
+    .queue-empty { padding: 34px 10px 38px; color: var(--dim); text-align: center; font: 11px/1.6 var(--mono); }
+    .queue-item { width: 100%; display: grid; grid-template-columns: 34px minmax(0,1fr) 22px; gap: 10px; align-items: center; padding: 10px 8px; border: 1px solid transparent; background: transparent; text-align: left; }
+    .queue-item:hover { border-color: var(--line); background: rgba(220,241,232,.055); }
+    .queue-item.current { border-color: rgba(140,233,222,.27); background: rgba(140,233,222,.08); }
+    .queue-index { color: var(--dim); font: 10px var(--mono); }
+    .queue-copy { min-width: 0; }
+    .queue-copy strong { display: block; overflow: hidden; color: var(--ink); text-overflow: ellipsis; white-space: nowrap; font-size: 11px; font-weight: 500; }
+    .queue-copy small { display: block; overflow: hidden; margin-top: 4px; color: var(--dim); text-overflow: ellipsis; white-space: nowrap; font: 9px var(--mono); }
+    .queue-duration { color: var(--dim); font: 9px var(--mono); }
+    .library-add { position: relative; z-index: 1; width: 100%; margin-top: 9px; padding: 11px; border-top: 1px solid var(--line); color: var(--muted); background: transparent; font-size: 11px; text-align: left; }
+    .library-add:hover { color: var(--ink); }
+    .note { padding: 19px; border-radius: 12px; }
+    .note p { position: relative; z-index: 1; margin: 0; font: 400 23px/.98 var(--display); letter-spacing: -.05em; }
+    .note small { position: relative; z-index: 1; display: block; margin-top: 18px; color: var(--dim); font: 9px var(--mono); letter-spacing: .1em; text-transform: uppercase; }
+    .toast { position: fixed; z-index: 10; left: 50%; bottom: 24px; transform: translate(-50%, 80px); opacity: 0; padding: 11px 14px; border: 1px solid var(--line-hi); border-radius: 4px; background: rgba(15,21,22,.92); box-shadow: var(--shadow); color: var(--ink); font-size: 12px; transition: .28s; pointer-events: none; }
+    .toast.show { transform: translate(-50%, 0); opacity: 1; }
+    .hidden { display: none !important; }
+    @media (max-width: 1020px) { .layout { grid-template-columns: 1fr; } .rail { position: static; grid-template-columns: 1.15fr .85fr; } }
+    @media (max-width: 700px) { .shell { width: min(100% - 24px, 1480px); padding-top: 15px; } .topbar { padding-bottom: 16px; } .wordmark { display: block; } .wordmark span { display: block; margin-top: 7px; } .top-note { font-size: 8px; } .stage { min-height: 62vh; } .empty-state { left: 24px; bottom: 112px; } .empty-state h1 { font-size: 54px; } .control-row .hide-small { display: none; } .volume { width: 76px; } .details { display: block; } .shortcut { margin-top: 10px; text-align: left; } .lower, .rail { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar"><div class="wordmark"><strong>PRISM</strong><span>local playback instrument</span></div><div class="top-note"><b>browser-local</b><br>nothing leaves this tab<br><a class="download-link" href="../Prism-local-video-player.zip" download="Prism-local-video-player.zip">Download app .zip</a></div></header>
+    <section class="layout">
+      <div class="main">
+        <section class="glass player" data-od-id="player">
+          <div class="stage" id="stage">
+            <div class="stage-head"><span>input 01 / <b id="readyState">waiting</b></span><span id="formatState">video · —</span></div>
+            <div class="empty-state" id="emptyState"><div class="kicker">your screen is empty</div><h1>Drop a moving image here.</h1><p>Choose a local video to begin. Playback happens in this browser tab; no upload or account is involved.</p><button id="emptyBrowse">Choose a video</button></div>
+            <video class="video hidden" id="video" playsinline></video>
+            <div class="controls"><div class="scrub" id="scrubber" aria-label="Seek video"><div class="scrub-track"><div class="scrub-progress" id="progress"></div></div></div><div class="control-row"><button class="control play" id="playBtn" aria-label="Play"><svg id="playIcon" viewBox="0 0 24 24"><path d="M8 5.7v12.6a1 1 0 0 0 1.5.86l10-6.3a1 1 0 0 0 0-1.72l-10-6.3A1 1 0 0 0 8 5.7Z"/></svg></button><button class="control hide-small" id="backBtn" aria-label="Back 10 seconds"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 5v5h5M12 8v8M10 10l2-2"/></svg></button><button class="control hide-small" id="forwardBtn" aria-label="Forward 10 seconds"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 5v5h-5M12 8v8M10 10l2-2"/></svg></button><span class="time" id="time">00:00 / 00:00</span><span class="grow"></span><div class="volume"><button class="control" id="muteBtn" aria-label="Mute"><svg viewBox="0 0 24 24"><path d="M4 10v4h4l5 4V6l-5 4H4Z"/><path d="M17 9a5 5 0 0 1 0 6"/></svg></button><input id="volume" type="range" min="0" max="1" step=".01" value=".82" aria-label="Volume" /></div><button class="control speed" id="speedBtn" aria-label="Playback speed">1×</button><button class="control" id="pipBtn" aria-label="Picture in picture"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="1"/><path d="M13 12h6v5h-6z"/></svg></button><button class="control" id="fullscreenBtn" aria-label="Fullscreen"><svg viewBox="0 0 24 24"><path d="M8 3H3v5M16 3h5v5M8 21H3v-5M21 16v5h-5"/></svg></button></div></div>
+          </div>
+          <div class="details"><div><h2 id="title">No file selected</h2><p id="subtitle">Select a video to see its details here.</p></div><div class="shortcut"><kbd>space</kbd> play &nbsp; <kbd>←</kbd><kbd>→</kbd> seek &nbsp; <kbd>f</kbd> full screen</div></div>
+        </section>
+        <div class="lower"><section class="glass panel" data-od-id="signal"><div class="panel-head"><h3>Signal trace</h3><span>output monitor</span></div><div class="visualizer paused" id="visualizer"></div><div class="metric-line"><div class="metric"><strong id="metricResolution">—</strong><span>resolution</span></div><div class="metric"><strong id="metricDuration">—</strong><span>duration</span></div><div class="metric"><strong id="metricSize">—</strong><span>file size</span></div></div></section><section class="glass panel" data-od-id="import"><div class="panel-head"><h3>Bring in a file</h3><span>local only</span></div><div class="drop" id="drop"><div><svg viewBox="0 0 24 24"><path d="M12 3v12M7 8l5-5 5 5M5 14v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4"/></svg><strong>Drop video here</strong><small>MP4, MKV, WebM, or another browser-readable video</small><button id="browse">Browse files</button></div></div></section></div>
+      </div>
+      <aside class="rail"><section class="glass library" data-od-id="library"><div class="panel-head"><h3>Library</h3><span class="library-count" id="libraryCount">0 files</span></div><div class="queue" id="queue"><div class="queue-empty" id="queueEmpty">Your local files will appear here.<br>Nothing is preloaded.</div></div><button class="library-add" id="addMore">+ Add files</button></section><section class="glass note" data-od-id="note"><p>The image is local.<br>The material is fluid.</p><small>prism / playback note 01</small></section></aside>
+    </section>
+  </main>
+  <input class="hidden" id="fileInput" type="file" accept="video/*,.mkv,video/x-matroska" multiple />
+  <div class="toast" id="toast"></div>
+  <script>
+    const $ = (s) => document.querySelector(s);
+    const video = $('#video'); const fileInput = $('#fileInput'); const visualizer = $('#visualizer');
+    let playlist = []; let activeIndex = -1; let speed = 1; let toastTimer;
+    for (let i = 0; i < 55; i += 1) { const bar = document.createElement('i'); bar.style.setProperty('--n', i); bar.style.setProperty('--level', `${18 + Math.random() * 74}%`); visualizer.appendChild(bar); }
+    const formatTime = (value) => { if (!Number.isFinite(value)) return '00:00'; const minutes = Math.floor(value / 60).toString().padStart(2, '0'); const seconds = Math.floor(value % 60).toString().padStart(2, '0'); return `${minutes}:${seconds}`; };
+    const formatSize = (bytes) => `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+    const toast = (message) => { const element = $('#toast'); element.textContent = message; element.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => element.classList.remove('show'), 2200); };
+    const updatePlayIcon = () => { $('#playIcon').innerHTML = video.paused ? '<path d="M8 5.7v12.6a1 1 0 0 0 1.5.86l10-6.3a1 1 0 0 0 0-1.72l-10-6.3A1 1 0 0 0 8 5.7Z"/>' : '<path d="M7 5h3v14H7zM14 5h3v14h-3z"/>'; visualizer.classList.toggle('paused', video.paused); };
+    const renderQueue = () => { const queue = $('#queue'); queue.innerHTML = ''; if (!playlist.length) { queue.innerHTML = '<div class="queue-empty">Your local files will appear here.<br>Nothing is preloaded.</div>'; } else { playlist.forEach((item, index) => { const row = document.createElement('button'); row.className = `queue-item${index === activeIndex ? ' current' : ''}`; row.type = 'button'; row.innerHTML = `<span class="queue-index">${String(index + 1).padStart(2, '0')}</span><span class="queue-copy"><strong>${item.file.name}</strong><small>${item.file.type || 'video'} · ${formatSize(item.file.size)}</small></span><span class="queue-duration">${item.duration || '—'}</span>`; row.addEventListener('click', () => selectTrack(index, true)); queue.appendChild(row); }); } $('#libraryCount').textContent = `${playlist.length} file${playlist.length === 1 ? '' : 's'}`; };
+    const selectTrack = (index, autoplay = false) => { const item = playlist[index]; if (!item) return; activeIndex = index; video.src = item.url; video.classList.remove('hidden'); $('#emptyState').classList.add('hidden'); $('#title').textContent = item.file.name.replace(/\.[^.]+$/, ''); $('#subtitle').textContent = `${item.file.type || 'video'} · ${formatSize(item.file.size)} · browser-local`; $('#readyState').textContent = 'loaded'; $('#formatState').textContent = `${(item.file.name.split('.').pop() || 'video').toUpperCase()} · reading`; $('#metricSize').textContent = formatSize(item.file.size); renderQueue(); if (autoplay) video.play().catch(() => {}); updatePlayIcon(); };
+    const addFiles = (fileList) => { const valid = [...fileList].filter((file) => file.type.startsWith('video/') || /\.(mp4|mov|webm|m4v|ogv|mkv)$/i.test(file.name)); if (!valid.length) { toast('Choose a browser-readable video file.'); return; } valid.forEach((file) => playlist.push({ file, url: URL.createObjectURL(file), duration: '' })); const firstNew = playlist.length - valid.length; renderQueue(); if (activeIndex === -1) selectTrack(firstNew, false); toast(`${valid.length} file${valid.length === 1 ? '' : 's'} added to the library.`); };
+    fileInput.addEventListener('change', (event) => { addFiles(event.target.files); event.target.value = ''; }); $('#browse').addEventListener('click', () => fileInput.click()); $('#emptyBrowse').addEventListener('click', () => fileInput.click()); $('#addMore').addEventListener('click', () => fileInput.click());
+    ['dragenter', 'dragover'].forEach((type) => $('#drop').addEventListener(type, (event) => { event.preventDefault(); $('#drop').classList.add('dragging'); })); ['dragleave', 'drop'].forEach((type) => $('#drop').addEventListener(type, (event) => { event.preventDefault(); $('#drop').classList.remove('dragging'); })); $('#drop').addEventListener('drop', (event) => addFiles(event.dataTransfer.files));
+    $('#playBtn').addEventListener('click', () => { if (!video.src) { fileInput.click(); return; } video.paused ? video.play() : video.pause(); }); video.addEventListener('play', updatePlayIcon); video.addEventListener('pause', updatePlayIcon);
+    video.addEventListener('loadedmetadata', () => { const item = playlist[activeIndex]; if (item) item.duration = formatTime(video.duration); $('#metricResolution').textContent = `${video.videoWidth}×${video.videoHeight}`; $('#metricDuration').textContent = formatTime(video.duration); $('#formatState').textContent = `${(item?.file.name.split('.').pop() || 'video').toUpperCase()} · ready`; renderQueue(); if (activeIndex >= 0) toast('Ready to play.'); });
+    video.addEventListener('error', () => { const item = playlist[activeIndex]; if (!item) return; const isMkv = /\.mkv$/i.test(item.file.name) || item.file.type === 'video/x-matroska'; $('#readyState').textContent = 'needs conversion'; $('#formatState').textContent = `${isMkv ? 'MKV' : 'VIDEO'} · unsupported`; $('#subtitle').textContent = isMkv ? 'MKV is loaded, but this browser cannot decode its current codec. Convert to MP4 / H.264 for playback.' : 'This video format or codec is not supported by the current browser.'; toast(isMkv ? 'MKV detected — browser decode support varies.' : 'This video codec is not supported here.'); });
+    video.addEventListener('timeupdate', () => { const percent = video.duration ? video.currentTime / video.duration * 100 : 0; $('#progress').style.width = `${percent}%`; $('#time').textContent = `${formatTime(video.currentTime)} / ${formatTime(video.duration)}`; }); video.addEventListener('ended', () => { if (activeIndex < playlist.length - 1) selectTrack(activeIndex + 1, true); });
+    $('#scrubber').addEventListener('click', (event) => { if (!video.duration) return; const bounds = event.currentTarget.getBoundingClientRect(); video.currentTime = ((event.clientX - bounds.left) / bounds.width) * video.duration; }); $('#backBtn').addEventListener('click', () => { video.currentTime = Math.max(0, video.currentTime - 10); }); $('#forwardBtn').addEventListener('click', () => { video.currentTime = Math.min(video.duration || 0, video.currentTime + 10); }); $('#volume').addEventListener('input', (event) => { video.volume = event.target.value; }); $('#muteBtn').addEventListener('click', () => { video.muted = !video.muted; toast(video.muted ? 'Sound muted.' : 'Sound on.'); });
+    $('#speedBtn').addEventListener('click', () => { speed = speed >= 2 ? .75 : speed + .25; video.playbackRate = speed; $('#speedBtn').textContent = `${speed}×`; toast(`Playback speed ${speed}×`); }); $('#pipBtn').addEventListener('click', async () => { if (document.pictureInPictureEnabled && video.src) { try { await video.requestPictureInPicture(); } catch {} } else toast('Picture in picture is unavailable here.'); }); $('#fullscreenBtn').addEventListener('click', () => { document.fullscreenElement ? document.exitFullscreen() : $('#stage').requestFullscreen?.(); });
+    document.addEventListener('keydown', (event) => { if (['INPUT', 'BUTTON'].includes(document.activeElement.tagName)) return; if (event.code === 'Space') { event.preventDefault(); $('#playBtn').click(); } if (event.key === 'ArrowLeft') $('#backBtn').click(); if (event.key === 'ArrowRight') $('#forwardBtn').click(); if (event.key.toLowerCase() === 'f') $('#fullscreenBtn').click(); if (event.key.toLowerCase() === 'm') $('#muteBtn').click(); });
+    window.addEventListener('beforeunload', () => playlist.forEach((item) => URL.revokeObjectURL(item.url))); renderQueue();
+    if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('./sw.js').catch(() => {});
+  </script>
+</body>
+</html>

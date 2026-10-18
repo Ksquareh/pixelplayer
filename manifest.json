@@ -1,0 +1,18 @@
+{
+  "name": "Prism — local video player",
+  "short_name": "Prism",
+  "description": "A browser-local MP4 player with a liquid glass interface.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0c1014",
+  "theme_color": "#0c1014",
+  "icons": [
+    {
+      "src": "prism-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
