@@ -1,8 +1,8 @@
-PRISM — LOCAL VIDEO PLAYER
+PIXELPLAYER — LOCAL VIDEO PLAYER
 
 Open index.html in a browser, then choose or drop a video file. MKV files are
 accepted and identified, but browser playback depends on the codecs inside the
-MKV container. If Prism reports that an MKV needs conversion, convert it to
+MKV container. If PixelPlayer reports that an MKV needs conversion, convert it to
 MP4/H.264 and add the converted file.
 
 For installable-app behavior and offline caching, serve this folder over localhost
