@@ -1,0 +1,12 @@
+#!/bin/zsh
+set -e
+
+APP_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+RESOURCES="$APP_ROOT/Contents/Resources"
+URL="file://${RESOURCES}/index.html"
+
+if [[ -d "/Applications/Google Chrome.app" ]]; then
+  open -na "/Applications/Google Chrome.app" --args --app="$URL"
+else
+  open "$URL"
+fi
