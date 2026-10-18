@@ -1,6 +1,6 @@
 {
-  "name": "Prism — local video player",
-  "short_name": "Prism",
+  "name": "PixelPlayer — local video player",
+  "short_name": "PixelPlayer",
   "description": "A browser-local MP4 player with a liquid glass interface.",
   "start_url": "./index.html",
   "scope": "./",
