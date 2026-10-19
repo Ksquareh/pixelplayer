@@ -4,12 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="theme-color" content="#0c1014" />
-  <meta name="application-name" content="PixelPlayer" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-title" content="PixelPlayer" />
   <link rel="icon" type="image/svg+xml" href="prism-icon.svg" />
-  <link rel="apple-touch-icon" href="prism-icon.svg" />
-  <link rel="manifest" href="manifest.json" />
   <title>PixelPlayer — local video player</title>
   <style>
     :root {
@@ -133,7 +128,7 @@
 </head>
 <body>
   <main class="shell">
-    <header class="topbar"><div class="wordmark"><strong>PIXELPLAYER</strong><span>local playback instrument</span></div><div class="top-note"><b>browser-local</b><br>nothing leaves this tab<br><a class="download-link" href="./Prism-local-video-player.zip" download="PixelPlayer-local-video-player.zip">Download app .zip</a></div></header>
+    <header class="topbar"><div class="wordmark"><strong>PIXELPLAYER</strong><span>local playback instrument</span></div><div class="top-note"><b>browser-local</b><br>nothing leaves this tab</div></header>
     <section class="layout">
       <div class="main">
         <section class="glass player" data-od-id="player">
@@ -181,7 +176,7 @@
     const speeds = [.75, 1, 1.25, 1.5, 2]; $('#speedBtn').addEventListener('click', () => { speed = speeds[(speeds.indexOf(speed) + 1) % speeds.length]; video.playbackRate = speed; $('#speedBtn').textContent = `${speed}×`; toast(`Playback speed ${speed}×`); focusStage(); }); $('#pipBtn').addEventListener('click', async () => { if (document.pictureInPictureEnabled && video.src) { try { await video.requestPictureInPicture(); } catch {} } else toast('Picture in picture is unavailable here.'); focusStage(); }); $('#fullscreenBtn').addEventListener('click', () => { document.fullscreenElement ? document.exitFullscreen() : $('#stage').requestFullscreen?.(); focusStage(); });
     document.addEventListener('keydown', (event) => { if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) return; if (event.code === 'Space') { event.preventDefault(); $('#playBtn').click(); } if (event.key === 'ArrowLeft') { event.preventDefault(); $('#backBtn').click(); } if (event.key === 'ArrowRight') { event.preventDefault(); $('#forwardBtn').click(); } if (event.key.toLowerCase() === 'f') $('#fullscreenBtn').click(); if (event.key.toLowerCase() === 'm') $('#muteBtn').click(); });
     window.addEventListener('beforeunload', () => playlist.forEach((item) => URL.revokeObjectURL(item.url))); renderQueue();
-    if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('./sw.js').catch(() => {});
+
   </script>
 </body>
 </html>
