@@ -16,3 +16,5 @@ Included files
 - prism-icon.svg, apple-touch-icon.png, icon-192.png, icon-512.png — app icons
 - sw.js — cache and update handling
 - pixelplayer-website.zip — downloadable website bundle
+
+Made by a young prodigy
