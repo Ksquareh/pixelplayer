@@ -1,5 +1,5 @@
-const CACHE_NAME = 'pixelplayer-web-v5';
-const APP_SHELL = ['./', './index.html', './prism-icon.svg'];
+const CACHE_NAME = 'pixelplayer-web-v6';
+const APP_SHELL = ['./', './index.html', './manifest.json', './prism-icon.svg', './apple-touch-icon.png', './icon-192.png', './icon-512.png'];
 
 const cacheResponse = (event, request, response) => {
   if (!response.ok) return response;
