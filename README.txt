@@ -1,10 +1,18 @@
 PIXELPLAYER — LOCAL VIDEO PLAYER
 
-Open the GitHub Pages website, then choose or drop a video file. Playback stays
-inside your browser; files are not uploaded. MP4/H.264 is recommended for the
-widest browser support. MKV playback depends on the codecs inside the container.
+PixelPlayer is a browser-local website for playing videos you choose from your device.
+Open the GitHub Pages site and choose a video. Files stay in the browser tab; no account or upload is required.
 
-Files:
-- index.html      player interface and controls
-- prism-icon.svg  website favicon
-- sw.js           website shell cache with automatic cache cleanup
+Compatibility notes
+- MP4/H.264 is the most broadly supported format. MKV support depends on the browser and the codecs inside the file.
+- The website cannot keep local video files after a reload because browsers do not allow a site to silently retain file access.
+- Resume points are saved locally for recently played files when the browser permits local storage.
+- Install metadata and PNG icons are included for supported Android browsers and iOS Home Screen shortcuts. Browser install behaviour varies by platform.
+- The included website ZIP is a static copy of the site; it is not a native Mac application.
+
+Included files
+- index.html — the website
+- manifest.json — install metadata
+- prism-icon.svg, apple-touch-icon.png, icon-192.png, icon-512.png — app icons
+- sw.js — cache and update handling
+- pixelplayer-website.zip — downloadable website bundle
