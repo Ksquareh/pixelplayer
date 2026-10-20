@@ -87,6 +87,8 @@
     .panel-head span { color: var(--dim); font: 10px var(--mono); letter-spacing: .1em; text-transform: uppercase; }
     .visualizer { position: relative; z-index: 1; display: flex; gap: 3px; align-items: center; height: 93px; padding: 0 5px; overflow: hidden; }
     .visualizer i { flex: 1; min-width: 2px; height: 8%; background: linear-gradient(180deg, var(--cyan), rgba(140,233,222,.15)); transform-origin: center; transition: height .08s linear, opacity .15s ease; }
+    .visualizer.playing i { animation: signalPulse 1.15s ease-in-out infinite alternate; animation-delay: calc(var(--n) * -34ms); }
+    @keyframes signalPulse { from { height: 10%; opacity: .4; } to { height: 58%; opacity: .78; } }
     .visualizer.paused i { opacity: .35; }
     .metric-line { position: relative; z-index: 1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; padding-top: 11px; border-top: 1px solid var(--line); }
     .metric strong { display: block; font: 14px var(--mono); font-weight: 500; }
@@ -151,6 +153,7 @@
     const $ = (s) => document.querySelector(s);
     const video = $('#video'); const fileInput = $('#fileInput'); const visualizer = $('#visualizer');
     let playlist = []; let activeIndex = -1; let speed = 1; let toastTimer; let audioContext; let analyser; let mediaSource; let frequencyData; let visualizerFrame;
+    const isFirefox = /Firefox\//.test(navigator.userAgent);
     for (let i = 0; i < 32; i += 1) { const bar = document.createElement('i'); bar.style.setProperty('--n', i); visualizer.appendChild(bar); }
     const formatTime = (value) => { if (!Number.isFinite(value)) return '00:00'; const minutes = Math.floor(value / 60).toString().padStart(2, '0'); const seconds = Math.floor(value % 60).toString().padStart(2, '0'); return `${minutes}:${seconds}`; };
     const formatSize = (bytes) => `${(bytes / 1024 / 1024).toFixed(1)} MB`;
@@ -173,13 +176,16 @@
     };
     const startVisualizer = () => { stopVisualizer(); if (!video.paused && !document.hidden) visualizerFrame = requestAnimationFrame(drawVisualizer); };
     const updatePlayIcon = () => {
-      $('#playIcon').innerHTML = video.paused ? '<path d="M8 5.7v12.6a1 1 0 0 0 1.5.86l10-6.3a1 1 0 0 0 0-1.72l-10-6.3A1 1 0 0 0 8 5.7Z"/>' : '<path d="M7 5h3v14H7zM14 5h3v14h-3z"/>';
-      visualizer.classList.toggle('paused', video.paused);
-      if (video.paused) { stopVisualizer(); paintIdleVisualizer(); } else startVisualizer();
+      const playing = !video.paused;
+      $('#playIcon').innerHTML = playing ? '<path d="M7 5h3v14H7zM14 5h3v14h-3z"/>' : '<path d="M8 5.7v12.6a1 1 0 0 0 1.5.86l10-6.3a1 1 0 0 0 0-1.72l-10-6.3A1 1 0 0 0 8 5.7Z"/>';
+      visualizer.classList.toggle('paused', !playing);
+      visualizer.classList.toggle('playing', playing);
+      $('#stage').classList.toggle('playing', playing);
+      if (!playing) { stopVisualizer(); paintIdleVisualizer(); } else startVisualizer();
     };
     const setupAudioGraph = () => {
       const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-      if (!AudioContextClass) return;
+      if (!AudioContextClass || isFirefox) return;
       if (!audioContext) {
         try {
           audioContext = new AudioContextClass();
