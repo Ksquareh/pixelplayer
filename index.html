@@ -286,7 +286,7 @@
     document.addEventListener('click', (event) => { if (event.target.closest('button')) setTimeout(focusStage, 0); });
     document.addEventListener('keydown', (event) => { if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) return; if (event.code === 'Space') { event.preventDefault(); $('#playBtn').click(); } if (event.key === 'ArrowLeft') { event.preventDefault(); $('#backBtn').click(); } if (event.key === 'ArrowRight') { event.preventDefault(); $('#forwardBtn').click(); } if (event.key.toLowerCase() === 'f') $('#fullscreenBtn').click(); if (event.key.toLowerCase() === 'm') $('#muteBtn').click(); });
     window.addEventListener('beforeunload', () => playlist.forEach(revokeItemUrl));
-    if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('./sw.js?v=3', { updateViaCache: 'none' }).catch(() => {});
+    if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('./sw.js?v=4', { updateViaCache: 'none' }).catch(() => {});
     renderQueue();
 
   </script>
