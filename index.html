@@ -155,6 +155,7 @@
     const video = $('#video'); const fileInput = $('#fileInput'); const visualizer = $('#visualizer');
     let playlist = []; let activeIndex = -1; let speed = 1; let toastTimer; let audioContext; let analyser; let mediaSource; let frequencyData; let visualizerFrame;
     const isFirefox = /Firefox\//.test(navigator.userAgent);
+    const isLikelyHevc = (file) => /(?:x265|h\.?265|hevc|10[- ]?bit)/i.test(file?.name || '');
     for (let i = 0; i < 32; i += 1) { const bar = document.createElement('i'); bar.style.setProperty('--n', i); visualizer.appendChild(bar); }
     const formatTime = (value) => { if (!Number.isFinite(value)) return '00:00'; const minutes = Math.floor(value / 60).toString().padStart(2, '0'); const seconds = Math.floor(value % 60).toString().padStart(2, '0'); return `${minutes}:${seconds}`; };
     const formatSize = (bytes) => `${(bytes / 1024 / 1024).toFixed(1)} MB`;
@@ -261,7 +262,17 @@
     fileInput.addEventListener('change', (event) => { addFiles(event.target.files); event.target.value = ''; }); $('#browse').addEventListener('click', () => fileInput.click()); $('#emptyBrowse').addEventListener('click', () => fileInput.click()); $('#addMore').addEventListener('click', () => fileInput.click());
     ['dragover', 'drop'].forEach((type) => document.addEventListener(type, (event) => event.preventDefault())); ['dragenter', 'dragover'].forEach((type) => $('#drop').addEventListener(type, (event) => { event.preventDefault(); $('#drop').classList.add('dragging'); })); ['dragleave', 'drop'].forEach((type) => $('#drop').addEventListener(type, (event) => { event.preventDefault(); $('#drop').classList.remove('dragging'); })); $('#drop').addEventListener('drop', (event) => addFiles(event.dataTransfer.files));
     $('#playBtn').addEventListener('click', async () => { if (!video.src) { fileInput.click(); return; } if (video.paused) await playVideo(); else video.pause(); focusStage(); }); video.addEventListener('play', () => { setupAudioGraph(); updatePlayIcon(); }); video.addEventListener('pause', updatePlayIcon);
-    video.addEventListener('loadedmetadata', () => { const item = playlist[activeIndex]; if (item) item.duration = formatTime(video.duration); $('#metricResolution').textContent = `${video.videoWidth}×${video.videoHeight}`; $('#metricDuration').textContent = formatTime(video.duration); $('#formatState').textContent = `${(item?.file.name.split('.').pop() || 'video').toUpperCase()} · ready`; renderQueue(); if (activeIndex >= 0) toast('Ready to play.'); });
+    video.addEventListener('loadedmetadata', () => {
+      const item = playlist[activeIndex];
+      if (item) item.duration = formatTime(video.duration);
+      const limitedFirefoxVideo = isFirefox && isLikelyHevc(item?.file);
+      $('#metricResolution').textContent = `${video.videoWidth}×${video.videoHeight}`;
+      $('#metricDuration').textContent = formatTime(video.duration);
+      $('#formatState').textContent = `${(item?.file.name.split('.').pop() || 'video').toUpperCase()} · ready`;
+      if (limitedFirefoxVideo) $('#subtitle').textContent = 'Firefox may play this file\'s audio without rendering its HEVC / 10-bit video frames. Convert it to H.264 MP4 for reliable playback.';
+      renderQueue();
+      if (activeIndex >= 0) toast(limitedFirefoxVideo ? 'Firefox may not render this HEVC / 10-bit video.' : 'Ready to play.');
+    });
     video.addEventListener('error', () => { const item = playlist[activeIndex]; if (!item) return; item.duration = ''; const isMkv = /\.mkv$/i.test(item.file.name) || item.file.type === 'video/x-matroska'; $('#readyState').textContent = 'needs conversion'; $('#formatState').textContent = `${isMkv ? 'MKV' : 'VIDEO'} · unsupported`; $('#metricResolution').textContent = '—'; $('#metricDuration').textContent = '—'; $('#time').textContent = '00:00 / 00:00'; $('#progress').style.width = '0%'; $('#subtitle').textContent = isMkv ? 'MKV is loaded, but this browser cannot decode its current codec. Convert to MP4 / H.264 for playback.' : 'This video format or codec is not supported by the current browser.'; renderQueue(); toast(isMkv ? 'MKV detected — browser decode support varies.' : 'This video codec is not supported here.'); });
     video.addEventListener('timeupdate', () => { const percent = video.duration ? video.currentTime / video.duration * 100 : 0; $('#progress').style.width = `${percent}%`; $('#time').textContent = `${formatTime(video.currentTime)} / ${formatTime(video.duration)}`; }); video.addEventListener('ended', () => { if (activeIndex < playlist.length - 1) selectTrack(activeIndex + 1, true); });
     const seekFromPointer = (event) => { if (!video.duration) return; const bounds = $('#scrubber').getBoundingClientRect(); const ratio = Math.min(1, Math.max(0, (event.clientX - bounds.left) / bounds.width)); video.currentTime = ratio * video.duration; };
