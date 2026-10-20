@@ -46,6 +46,7 @@
     .stage { position: relative; min-height: min(64vh, 650px); overflow: hidden; background: #080b0d; border: 1px solid rgba(220,241,232,.12); }
     .stage:focus-visible { outline: 2px solid var(--cyan); outline-offset: -2px; }
     .stage::before { content: ''; position: absolute; width: 60vw; height: 60vw; max-width: 720px; max-height: 720px; left: 27%; top: 25%; border-radius: 47% 53% 61% 39% / 43% 42% 58% 57%; background: radial-gradient(circle at 29% 22%, rgba(255,255,255,.8), transparent 8%), linear-gradient(120deg, rgba(140,233,222,.78), rgba(110,166,155,.25) 37%, rgba(241,162,185,.55)); filter: blur(24px); opacity: .65; transform: rotate(-18deg); animation: drift 15s ease-in-out infinite alternate; }
+    .stage.playing::before { animation: none; }
     .stage::after { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 55% 37%, transparent 10%, rgba(5,8,10,.08) 46%, rgba(5,8,10,.72) 100%); pointer-events: none; }
     @keyframes drift { to { transform: rotate(-6deg) translate(35px, -14px) scale(1.08); } }
     .stage-head { position: absolute; z-index: 2; inset: 18px 20px auto; display: flex; justify-content: space-between; color: var(--dim); font: 10px var(--mono); letter-spacing: .1em; text-transform: uppercase; }
