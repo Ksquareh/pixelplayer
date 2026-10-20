@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pixelplayer-web-v4';
+const CACHE_NAME = 'pixelplayer-web-v5';
 const APP_SHELL = ['./', './index.html', './prism-icon.svg'];
 
 const cacheResponse = (event, request, response) => {
