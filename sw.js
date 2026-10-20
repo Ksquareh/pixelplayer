@@ -1,16 +1,17 @@
-const CACHE_NAME = 'pixelplayer-web-v7';
-const APP_SHELL = ['./', './index.html', './manifest.json', './prism-icon.svg', './apple-touch-icon.png', './icon-192.png', './icon-512.png'];
+const CACHE_NAME = 'pixelplayer-web-v8';
+const APP_SHELL = ['./', './index.html', './manifest.json', './pixelplayer-icon.svg', './apple-touch-icon.png', './icon-192.png', './icon-512.png'];
 
 const cacheResponse = (event, request, response) => {
   if (!response.ok) return response;
   const copy = response.clone();
-  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.put(request, copy)));
+  const cacheUrl = new URL(request.url); cacheUrl.search = '';
+  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.put(cacheUrl.toString(), copy)));
   return response;
 };
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
-  event.waitUntil(caches.open(CACHE_NAME).then((cache) => Promise.all(APP_SHELL.map((asset) => fetch(asset).then((response) => response.ok ? cache.put(asset, response) : null).catch(() => null)))));
+  event.waitUntil(caches.open(CACHE_NAME).then((cache) => Promise.all(APP_SHELL.map((asset) => fetch(asset).then((response) => { if (!response.ok) throw new Error(`${asset} ${response.status}`); return cache.put(asset, response).then(() => true); }).catch(() => false))).then((results) => { if (!results.some(Boolean)) throw new Error('PixelPlayer shell could not be cached.'); if (results.some((result) => !result)) console.warn('PixelPlayer shell installed with missing optional files.'); })));
 });
 
 self.addEventListener('activate', (event) => {
@@ -30,12 +31,13 @@ self.addEventListener('fetch', (event) => {
   if (request.method !== 'GET') return;
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
+  const cacheUrl = new URL(url); cacheUrl.search = '';
 
   if (request.mode === 'navigate' || url.pathname.endsWith('/index.html')) {
     event.respondWith(
       fetch(request)
         .then((response) => cacheResponse(event, request, response))
-        .catch(() => caches.match(request)
+        .catch(() => caches.match(cacheUrl.toString())
           .then((cached) => cached || caches.match('./index.html'))
           .then((cached) => cached || Response.error()))
     );
@@ -43,7 +45,7 @@ self.addEventListener('fetch', (event) => {
   }
 
   event.respondWith(
-    caches.match(request).then((cached) => {
+    caches.match(cacheUrl.toString()).then((cached) => {
       const network = fetch(request)
         .then((response) => cacheResponse(event, request, response))
         .catch(() => cached || Response.error());
