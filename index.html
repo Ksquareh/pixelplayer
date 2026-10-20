@@ -9,8 +9,8 @@
   <style>
     :root {
       --ink: #f4f5f2;
-      --muted: #a9b1ae;
-      --dim: #68736f;
+      --muted: #b9c3bf;
+      --dim: #8d9893;
       --bg: #0c1014;
       --line: rgba(220, 241, 232, .16);
       --line-hi: rgba(220, 241, 232, .3);
@@ -25,7 +25,7 @@
     * { box-sizing: border-box; }
     html, body { margin: 0; min-height: 100%; }
     body { color: var(--ink); background: var(--bg); font-family: var(--sans); overflow-x: hidden; }
-    body::before { content: ''; position: fixed; inset: 0; z-index: -2; pointer-events: none; background: radial-gradient(ellipse at 18% 8%, rgba(140,233,222,.12), transparent 35%), radial-gradient(ellipse at 86% 79%, rgba(241,162,185,.10), transparent 32%), linear-gradient(135deg, #10161a 0%, #0c1014 52%, #101316 100%); }
+    body::before { content: ''; position: fixed; inset: 0; z-index: -2; pointer-events: none; background: radial-gradient(ellipse at 18% 8%, rgba(140,233,222,.08), transparent 35%), radial-gradient(ellipse at 86% 79%, rgba(241,162,185,.07), transparent 32%), linear-gradient(135deg, #10161a 0%, #0c1014 52%, #101316 100%); }
     body::after { content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none; opacity: .045; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 160 160' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='grain'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.84' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23grain)'/%3E%3C/svg%3E"); }
     button, input { font: inherit; }
     button { border: 0; color: inherit; cursor: pointer; }
@@ -45,7 +45,7 @@
     .player { padding: 11px; border-radius: 18px; }
     .stage { position: relative; min-height: min(64vh, 650px); overflow: hidden; background: #080b0d; border: 1px solid rgba(220,241,232,.12); }
     .stage:focus-visible { outline: 2px solid var(--cyan); outline-offset: -2px; }
-    .stage::before { content: ''; position: absolute; width: 60vw; height: 60vw; max-width: 720px; max-height: 720px; left: 27%; top: 25%; border-radius: 47% 53% 61% 39% / 43% 42% 58% 57%; background: radial-gradient(circle at 29% 22%, rgba(255,255,255,.8), transparent 8%), linear-gradient(120deg, rgba(140,233,222,.78), rgba(110,166,155,.25) 37%, rgba(241,162,185,.55)); filter: blur(24px); opacity: .65; transform: rotate(-18deg); animation: drift 15s ease-in-out infinite alternate; }
+    .stage::before { content: ''; position: absolute; width: 60vw; height: 60vw; max-width: 720px; max-height: 720px; left: 27%; top: 25%; border-radius: 47% 53% 61% 39% / 43% 42% 58% 57%; background: radial-gradient(circle at 29% 22%, rgba(255,255,255,.8), transparent 8%), linear-gradient(120deg, rgba(140,233,222,.78), rgba(110,166,155,.25) 37%, rgba(241,162,185,.55)); filter: blur(24px); opacity: .48; transform: rotate(-18deg); animation: drift 15s ease-in-out infinite alternate; }
     .stage.playing::before { animation: none; }
     .stage::after { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 55% 37%, transparent 10%, rgba(5,8,10,.08) 46%, rgba(5,8,10,.72) 100%); pointer-events: none; }
     @keyframes drift { to { transform: rotate(-6deg) translate(35px, -14px) scale(1.08); } }
@@ -58,7 +58,8 @@
     .empty-state p { max-width: 300px; margin: 0; color: var(--muted); font-size: 14px; line-height: 1.55; }
     .empty-state button { margin-top: 22px; padding: 11px 15px; border: 1px solid var(--line-hi); border-radius: 4px; background: rgba(220,241,232,.1); font-size: 12px; }
     .empty-state button:hover { background: rgba(220,241,232,.18); transform: translateY(-1px); }
-    .controls { position: absolute; z-index: 4; left: 19px; right: 19px; bottom: 17px; }
+    .controls { position: absolute; z-index: 4; left: 19px; right: 19px; bottom: 17px; opacity: 0; pointer-events: none; transition: opacity .18s ease; }
+    .stage.has-video .controls { opacity: 1; pointer-events: auto; }
     .scrub { position: relative; height: 20px; display: flex; align-items: center; cursor: pointer; touch-action: none; user-select: none; }
     .scrub-track { width: 100%; height: 3px; background: rgba(244,245,242,.23); }
     .scrub-progress { position: relative; width: 0; height: 100%; background: var(--cyan); box-shadow: 0 0 13px rgba(140,233,222,.7); }
@@ -126,7 +127,7 @@
     .toast.show { transform: translate(-50%, 0); opacity: 1; }
     .hidden { display: none !important; }
     @media (max-width: 1020px) { .layout { grid-template-columns: 1fr; } .rail { position: static; grid-template-columns: 1.15fr .85fr; } }
-    @media (max-width: 700px) { .shell { width: min(100% - 24px, 1480px); padding-top: 15px; } .topbar { padding-bottom: 16px; } .wordmark { display: block; } .wordmark span { display: block; margin-top: 7px; } .top-note { font-size: 8px; } .stage { min-height: 62vh; } .empty-state { left: 24px; bottom: 112px; } .empty-state h1 { font-size: 54px; } .control-row .hide-small { display: none; } .volume { width: 76px; } .details { display: block; } .shortcut { margin-top: 10px; text-align: left; } .lower, .rail { grid-template-columns: 1fr; } }
+    @media (max-width: 700px) { .shell { width: min(100% - 24px, 1480px); padding-top: 15px; } .topbar { padding-bottom: 16px; } .wordmark { display: block; } .wordmark span { display: block; margin-top: 7px; } .top-note { font-size: 8px; } .stage { min-height: 62vh; } .empty-state { left: 24px; bottom: 112px; } .empty-state h1 { font-size: 54px; } .control-row .hide-small { display: grid; } .volume { width: 64px; } .control-row { gap: 3px; } .details { display: block; } .shortcut { margin-top: 10px; text-align: left; } .lower, .rail { grid-template-columns: 1fr; } .layout { display: flex; flex-direction: column; } .main, .rail { display: contents; } .player { order: 1; } .library { order: 2; } .lower { order: 3; } .note { order: 4; } }
   </style>
 </head>
 <body>
@@ -152,7 +153,7 @@
   <div class="toast" id="toast"></div>
   <script>
     const $ = (s) => document.querySelector(s);
-    const video = $('#video'); const fileInput = $('#fileInput'); const visualizer = $('#visualizer');
+    const video = $('#video'); const stage = $('#stage'); const fileInput = $('#fileInput'); const visualizer = $('#visualizer');
     let playlist = []; let activeIndex = -1; let speed = 1; let toastTimer; let audioContext; let analyser; let mediaSource; let frequencyData; let visualizerFrame;
     const isFirefox = /Firefox\//.test(navigator.userAgent);
     const isLikelyHevc = (file) => /(?:x265|h\.?265|hevc|10[- ]?bit)/i.test(file?.name || '');
@@ -208,11 +209,17 @@
       if (audioContext.state === 'suspended') audioContext.resume().catch(() => {});
     };
     paintIdleVisualizer();
-    const clearActiveTrack = () => { video.pause(); video.removeAttribute('src'); video.load(); video.classList.add('hidden'); $('#emptyState').classList.remove('hidden'); $('#title').textContent = 'No file selected'; $('#subtitle').textContent = 'Select a video to see its details here.'; $('#readyState').textContent = 'waiting'; $('#formatState').textContent = '—'; $('#metricResolution').textContent = '—'; $('#metricDuration').textContent = '—'; $('#metricSize').textContent = '—'; $('#time').textContent = '00:00 / 00:00'; $('#progress').style.width = '0%'; updatePlayIcon(); focusStage(); };
+    const clearActiveTrack = () => { video.pause(); video.removeAttribute('src'); video.load(); video.classList.add('hidden'); stage.classList.remove('has-video'); $('#emptyState').classList.remove('hidden'); $('#title').textContent = 'No file selected'; $('#subtitle').textContent = 'Select a video to see its details here.'; $('#readyState').textContent = 'waiting'; $('#formatState').textContent = '—'; $('#metricResolution').textContent = '—'; $('#metricDuration').textContent = '—'; $('#metricSize').textContent = '—'; $('#time').textContent = '00:00 / 00:00'; $('#progress').style.width = '0%'; updatePlayIcon(); focusStage(); };
     const revokeItemUrl = (item) => { if (item?.url) { URL.revokeObjectURL(item.url); item.url = ''; } };
     const removeTrack = (index) => { const [removed] = playlist.splice(index, 1); if (!removed) return; const wasActive = index === activeIndex; if (wasActive) { activeIndex = -1; clearActiveTrack(); } else if (index < activeIndex) { activeIndex -= 1; } revokeItemUrl(removed); renderQueue(); if (wasActive && playlist.length) selectTrack(Math.min(index, playlist.length - 1), false); toast(`${removed.file.name} removed from the library.`); };
     const renderQueue = () => {
       const queue = $('#queue');
+      const scrollX = window.scrollX;
+      const scrollY = window.scrollY;
+      const activeElement = document.activeElement;
+      const focusedRow = activeElement?.closest?.('.queue-item');
+      const focusedIndex = focusedRow ? Number(focusedRow.dataset.index) : -1;
+      const focusedRemove = Boolean(activeElement?.closest?.('.queue-remove'));
       queue.replaceChildren();
       if (!playlist.length) {
         const empty = document.createElement('div');
@@ -225,6 +232,7 @@
           row.className = 'queue-item' + (index === activeIndex ? ' current' : '');
           row.setAttribute('role', 'button');
           row.tabIndex = 0;
+          row.dataset.index = index;
           const queueIndex = document.createElement('span');
           queueIndex.className = 'queue-index';
           queueIndex.textContent = String(index + 1).padStart(2, '0');
@@ -251,13 +259,20 @@
         });
       }
       $('#libraryCount').textContent = playlist.length + ' file' + (playlist.length === 1 ? '' : 's');
+      if (focusedIndex >= 0) {
+        const restoredRow = queue.querySelector(`[data-index="${focusedIndex}"]`);
+        const focusTarget = focusedRemove ? restoredRow?.querySelector('.queue-remove') : restoredRow;
+        if (focusTarget) focusTarget.focus({ preventScroll: true });
+        else if (focusedRow) focusStage();
+      }
+      window.scrollTo(scrollX, scrollY);
     };
     const playVideo = async () => {
       setupAudioGraph();
       if (audioContext?.state === 'suspended') await audioContext.resume().catch(() => {});
       try { await video.play(); } catch { toast('Playback was blocked. Press play again.'); }
     };
-    const selectTrack = (index, autoplay = false) => { const item = playlist[index]; if (!item) return; activeIndex = index; item.duration = ''; video.pause(); video.removeAttribute('src'); video.load(); video.src = item.url; video.load(); video.classList.remove('hidden'); $('#emptyState').classList.add('hidden'); $('#title').textContent = item.file.name.replace(/\.[^.]+$/, ''); $('#subtitle').textContent = `${item.file.type || 'video'} · ${formatSize(item.file.size)} · browser-local`; $('#readyState').textContent = 'loading'; $('#formatState').textContent = `${(item.file.name.split('.').pop() || 'video').toUpperCase()} · reading`; $('#metricResolution').textContent = '—'; $('#metricDuration').textContent = '—'; $('#metricSize').textContent = formatSize(item.file.size); $('#time').textContent = '00:00 / 00:00'; $('#progress').style.width = '0%'; renderQueue(); if (autoplay) playVideo(); updatePlayIcon(); focusStage(); };
+    const selectTrack = (index, autoplay = false) => { const item = playlist[index]; if (!item) return; activeIndex = index; item.duration = ''; video.pause(); video.removeAttribute('src'); video.load(); video.src = item.url; video.load(); video.classList.remove('hidden'); stage.classList.add('has-video'); $('#emptyState').classList.add('hidden'); $('#title').textContent = item.file.name.replace(/\.[^.]+$/, ''); $('#subtitle').textContent = `${item.file.type || 'video'} · ${formatSize(item.file.size)} · browser-local`; $('#readyState').textContent = 'loading'; $('#formatState').textContent = `${(item.file.name.split('.').pop() || 'video').toUpperCase()} · reading`; $('#metricResolution').textContent = '—'; $('#metricDuration').textContent = '—'; $('#metricSize').textContent = formatSize(item.file.size); $('#time').textContent = '00:00 / 00:00'; $('#progress').style.width = '0%'; renderQueue(); if (autoplay) playVideo(); updatePlayIcon(); focusStage(); };
     const addFiles = (fileList) => { const valid = [...fileList].filter((file) => file.type.startsWith('video/') || /\.(mp4|mov|webm|m4v|ogv|mkv)$/i.test(file.name)); if (!valid.length) { toast('Choose a browser-readable video file.'); return; } valid.forEach((file) => playlist.push({ file, url: URL.createObjectURL(file), duration: '' })); const firstNew = playlist.length - valid.length; renderQueue(); if (activeIndex === -1) selectTrack(firstNew, false); toast(`${valid.length} file${valid.length === 1 ? '' : 's'} added to the library.`); };
     fileInput.addEventListener('change', (event) => { addFiles(event.target.files); event.target.value = ''; }); $('#browse').addEventListener('click', () => fileInput.click()); $('#emptyBrowse').addEventListener('click', () => fileInput.click()); $('#addMore').addEventListener('click', () => fileInput.click());
     ['dragover', 'drop'].forEach((type) => document.addEventListener(type, (event) => event.preventDefault())); ['dragenter', 'dragover'].forEach((type) => $('#drop').addEventListener(type, (event) => { event.preventDefault(); $('#drop').classList.add('dragging'); })); ['dragleave', 'drop'].forEach((type) => $('#drop').addEventListener(type, (event) => { event.preventDefault(); $('#drop').classList.remove('dragging'); })); $('#drop').addEventListener('drop', (event) => addFiles(event.dataTransfer.files));
@@ -280,13 +295,30 @@
     video.addEventListener('error', () => { const item = playlist[activeIndex]; if (!item) return; item.duration = ''; const isMkv = /\.mkv$/i.test(item.file.name) || item.file.type === 'video/x-matroska'; $('#readyState').textContent = 'needs conversion'; $('#formatState').textContent = `${isMkv ? 'MKV' : 'VIDEO'} · unsupported`; $('#metricResolution').textContent = '—'; $('#metricDuration').textContent = '—'; $('#time').textContent = '00:00 / 00:00'; $('#progress').style.width = '0%'; $('#subtitle').textContent = isMkv ? 'MKV is loaded, but this browser cannot decode its current codec. Convert to MP4 / H.264 for playback.' : 'This video format or codec is not supported by the current browser.'; renderQueue(); toast(isMkv ? 'MKV detected — browser decode support varies.' : 'This video codec is not supported here.'); });
     video.addEventListener('timeupdate', () => { const percent = video.duration ? video.currentTime / video.duration * 100 : 0; $('#progress').style.width = `${percent}%`; $('#time').textContent = `${formatTime(video.currentTime)} / ${formatTime(video.duration)}`; }); video.addEventListener('ended', () => { if (activeIndex < playlist.length - 1) selectTrack(activeIndex + 1, true); });
     const seekFromPointer = (event) => { if (!video.duration) return; const bounds = $('#scrubber').getBoundingClientRect(); const ratio = Math.min(1, Math.max(0, (event.clientX - bounds.left) / bounds.width)); video.currentTime = ratio * video.duration; };
+    let lastStageTapAt = 0;
+    let lastStageTapX = 0;
+    stage.addEventListener('pointerup', (event) => {
+      if (event.pointerType !== 'touch' || event.target.closest('.controls') || !video.duration) return;
+      const now = performance.now();
+      const isDoubleTap = now - lastStageTapAt < 350 && Math.abs(event.clientX - lastStageTapX) < 48;
+      if (isDoubleTap) {
+        const bounds = stage.getBoundingClientRect();
+        const delta = event.clientX < bounds.left + bounds.width / 2 ? -10 : 10;
+        video.currentTime = Math.min(video.duration, Math.max(0, video.currentTime + delta));
+        toast(`${delta < 0 ? 'Back' : 'Forward'} 10 seconds`);
+        lastStageTapAt = 0;
+      } else {
+        lastStageTapAt = now;
+        lastStageTapX = event.clientX;
+      }
+    });
     $('#scrubber').addEventListener('pointerdown', (event) => { if (!video.duration) return; event.currentTarget.setPointerCapture?.(event.pointerId); seekFromPointer(event); }); $('#scrubber').addEventListener('pointermove', (event) => { if (event.currentTarget.hasPointerCapture?.(event.pointerId)) seekFromPointer(event); }); $('#scrubber').addEventListener('click', seekFromPointer); $('#backBtn').addEventListener('click', () => { video.currentTime = Math.max(0, video.currentTime - 10); focusStage(); }); $('#forwardBtn').addEventListener('click', () => { video.currentTime = Math.min(video.duration || 0, video.currentTime + 10); focusStage(); }); $('#volume').addEventListener('input', (event) => { video.volume = event.target.value; }); $('#muteBtn').addEventListener('click', () => { video.muted = !video.muted; toast(video.muted ? 'Sound muted.' : 'Sound on.'); focusStage(); });
     const speeds = [.75, 1, 1.25, 1.5, 2]; $('#speedBtn').addEventListener('click', () => { speed = speeds[(speeds.indexOf(speed) + 1) % speeds.length]; video.playbackRate = speed; $('#speedBtn').textContent = `${speed}×`; toast(`Playback speed ${speed}×`); focusStage(); }); $('#pipBtn').addEventListener('click', async () => { if (document.pictureInPictureEnabled && video.src) { try { await video.requestPictureInPicture(); } catch {} } else toast('Picture in picture is unavailable here.'); focusStage(); }); $('#fullscreenBtn').addEventListener('click', () => { document.fullscreenElement ? document.exitFullscreen() : $('#stage').requestFullscreen?.(); focusStage(); });
     document.addEventListener('visibilitychange', () => { if (document.hidden) stopVisualizer(); else if (!video.paused) startVisualizer(); });
     document.addEventListener('click', (event) => { if (event.target.closest('button')) setTimeout(focusStage, 0); });
     document.addEventListener('keydown', (event) => { if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) return; if (event.code === 'Space') { event.preventDefault(); $('#playBtn').click(); } if (event.key === 'ArrowLeft') { event.preventDefault(); $('#backBtn').click(); } if (event.key === 'ArrowRight') { event.preventDefault(); $('#forwardBtn').click(); } if (event.key.toLowerCase() === 'f') $('#fullscreenBtn').click(); if (event.key.toLowerCase() === 'm') $('#muteBtn').click(); });
     window.addEventListener('beforeunload', () => playlist.forEach(revokeItemUrl));
-    if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('./sw.js?v=4', { updateViaCache: 'none' }).catch(() => {});
+    if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('./sw.js?v=5', { updateViaCache: 'none' }).catch(() => {});
     renderQueue();
 
   </script>
