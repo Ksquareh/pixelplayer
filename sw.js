@@ -1,5 +1,12 @@
-const CACHE_NAME = 'pixelplayer-web-v3';
+const CACHE_NAME = 'pixelplayer-web-v4';
 const APP_SHELL = ['./', './index.html', './prism-icon.svg'];
+
+const cacheResponse = (event, request, response) => {
+  if (!response.ok) return response;
+  const copy = response.clone();
+  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.put(request, copy)));
+  return response;
+};
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
@@ -27,22 +34,19 @@ self.addEventListener('fetch', (event) => {
   if (request.mode === 'navigate' || url.pathname.endsWith('/index.html')) {
     event.respondWith(
       fetch(request)
-        .then((response) => {
-          const copy = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
-          return response;
-        })
-        .catch(() => caches.match(request).then((cached) => cached || caches.match('./index.html')))
+        .then((response) => cacheResponse(event, request, response))
+        .catch(() => caches.match(request)
+          .then((cached) => cached || caches.match('./index.html'))
+          .then((cached) => cached || Response.error()))
     );
     return;
   }
 
   event.respondWith(
     caches.match(request).then((cached) => {
-      const network = fetch(request).then((response) => {
-        if (response.ok) caches.open(CACHE_NAME).then((cache) => cache.put(request, response.clone()));
-        return response;
-      }).catch(() => cached);
+      const network = fetch(request)
+        .then((response) => cacheResponse(event, request, response))
+        .catch(() => cached || Response.error());
       return cached || network;
     })
   );
