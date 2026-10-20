@@ -151,15 +151,55 @@
     const $ = (s) => document.querySelector(s);
     const video = $('#video'); const fileInput = $('#fileInput'); const visualizer = $('#visualizer');
     let playlist = []; let activeIndex = -1; let speed = 1; let toastTimer; let audioContext; let analyser; let mediaSource; let frequencyData; let visualizerFrame;
-    for (let i = 0; i < 55; i += 1) { const bar = document.createElement('i'); bar.style.setProperty('--n', i); visualizer.appendChild(bar); }
+    for (let i = 0; i < 32; i += 1) { const bar = document.createElement('i'); bar.style.setProperty('--n', i); visualizer.appendChild(bar); }
     const formatTime = (value) => { if (!Number.isFinite(value)) return '00:00'; const minutes = Math.floor(value / 60).toString().padStart(2, '0'); const seconds = Math.floor(value % 60).toString().padStart(2, '0'); return `${minutes}:${seconds}`; };
     const formatSize = (bytes) => `${(bytes / 1024 / 1024).toFixed(1)} MB`;
     const toast = (message) => { const element = $('#toast'); element.textContent = message; element.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => element.classList.remove('show'), 2200); };
     const focusStage = () => { $('#stage').focus({ preventScroll: true }); };
-    const updatePlayIcon = () => { $('#playIcon').innerHTML = video.paused ? '<path d="M8 5.7v12.6a1 1 0 0 0 1.5.86l10-6.3a1 1 0 0 0 0-1.72l-10-6.3A1 1 0 0 0 8 5.7Z"/>' : '<path d="M7 5h3v14H7zM14 5h3v14h-3z"/>'; visualizer.classList.toggle('paused', video.paused); };
-    const setupAudioGraph = () => { const AudioContextClass = window.AudioContext || window.webkitAudioContext; if (!AudioContextClass) return; if (!audioContext) { audioContext = new AudioContextClass(); analyser = audioContext.createAnalyser(); analyser.fftSize = 128; analyser.smoothingTimeConstant = .82; frequencyData = new Uint8Array(analyser.frequencyBinCount); mediaSource = audioContext.createMediaElementSource(video); mediaSource.connect(analyser); analyser.connect(audioContext.destination); } if (audioContext.state === 'suspended') audioContext.resume().catch(() => {}); };
-    const drawVisualizer = () => { if (analyser && frequencyData) { analyser.getByteFrequencyData(frequencyData); [...visualizer.children].forEach((bar, index) => { const sample = frequencyData[Math.floor(index * frequencyData.length / visualizer.children.length)] || 0; bar.style.height = `${Math.max(8, sample / 255 * 100)}%`; bar.style.opacity = video.paused ? '.35' : `${Math.max(.35, sample / 255)}`; }); } else { [...visualizer.children].forEach((bar) => { bar.style.height = video.paused ? '8%' : '12%'; }); } visualizerFrame = requestAnimationFrame(drawVisualizer); };
-    drawVisualizer();
+    const stopVisualizer = () => { if (visualizerFrame) cancelAnimationFrame(visualizerFrame); visualizerFrame = 0; };
+    const paintIdleVisualizer = () => { [...visualizer.children].forEach((bar) => { bar.style.height = '8%'; bar.style.opacity = '.35'; }); };
+    let lastVisualizerAt = 0;
+    const drawVisualizer = (now = 0) => {
+      if (!analyser || !frequencyData || video.paused || document.hidden) { stopVisualizer(); return; }
+      if (now - lastVisualizerAt < 33) { visualizerFrame = requestAnimationFrame(drawVisualizer); return; }
+      lastVisualizerAt = now;
+      analyser.getByteFrequencyData(frequencyData);
+      [...visualizer.children].forEach((bar, index) => {
+        const sample = frequencyData[Math.floor(index * frequencyData.length / visualizer.children.length)] || 0;
+        bar.style.height = `${Math.max(8, sample / 255 * 100)}%`;
+        bar.style.opacity = `${Math.max(.35, sample / 255)}`;
+      });
+      visualizerFrame = requestAnimationFrame(drawVisualizer);
+    };
+    const startVisualizer = () => { stopVisualizer(); if (!video.paused && !document.hidden) visualizerFrame = requestAnimationFrame(drawVisualizer); };
+    const updatePlayIcon = () => {
+      $('#playIcon').innerHTML = video.paused ? '<path d="M8 5.7v12.6a1 1 0 0 0 1.5.86l10-6.3a1 1 0 0 0 0-1.72l-10-6.3A1 1 0 0 0 8 5.7Z"/>' : '<path d="M7 5h3v14H7zM14 5h3v14h-3z"/>';
+      visualizer.classList.toggle('paused', video.paused);
+      if (video.paused) { stopVisualizer(); paintIdleVisualizer(); } else startVisualizer();
+    };
+    const setupAudioGraph = () => {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextClass) return;
+      if (!audioContext) {
+        try {
+          audioContext = new AudioContextClass();
+          analyser = audioContext.createAnalyser();
+          analyser.fftSize = 64;
+          analyser.smoothingTimeConstant = .8;
+          frequencyData = new Uint8Array(analyser.frequencyBinCount);
+          mediaSource = audioContext.createMediaElementSource(video);
+          mediaSource.connect(analyser);
+          analyser.connect(audioContext.destination);
+        } catch {
+          analyser = null; mediaSource = null; frequencyData = null;
+          audioContext?.close().catch(() => {});
+          audioContext = null;
+          return;
+        }
+      }
+      if (audioContext.state === 'suspended') audioContext.resume().catch(() => {});
+    };
+    paintIdleVisualizer();
     const clearActiveTrack = () => { video.pause(); video.removeAttribute('src'); video.load(); video.classList.add('hidden'); $('#emptyState').classList.remove('hidden'); $('#title').textContent = 'No file selected'; $('#subtitle').textContent = 'Select a video to see its details here.'; $('#readyState').textContent = 'waiting'; $('#formatState').textContent = '—'; $('#metricResolution').textContent = '—'; $('#metricDuration').textContent = '—'; $('#metricSize').textContent = '—'; $('#time').textContent = '00:00 / 00:00'; $('#progress').style.width = '0%'; updatePlayIcon(); focusStage(); };
     const revokeItemUrl = (item) => { if (item?.url) { URL.revokeObjectURL(item.url); item.url = ''; } };
     const removeTrack = (index) => { const [removed] = playlist.splice(index, 1); if (!removed) return; const wasActive = index === activeIndex; if (wasActive) { activeIndex = -1; clearActiveTrack(); } else if (index < activeIndex) { activeIndex -= 1; } revokeItemUrl(removed); renderQueue(); if (wasActive && playlist.length) selectTrack(Math.min(index, playlist.length - 1), false); toast(`${removed.file.name} removed from the library.`); };
@@ -204,17 +244,23 @@
       }
       $('#libraryCount').textContent = playlist.length + ' file' + (playlist.length === 1 ? '' : 's');
     };
-    const selectTrack = (index, autoplay = false) => { const item = playlist[index]; if (!item) return; activeIndex = index; item.duration = ''; video.pause(); video.removeAttribute('src'); video.load(); video.src = item.url; video.load(); video.classList.remove('hidden'); $('#emptyState').classList.add('hidden'); $('#title').textContent = item.file.name.replace(/\.[^.]+$/, ''); $('#subtitle').textContent = `${item.file.type || 'video'} · ${formatSize(item.file.size)} · browser-local`; $('#readyState').textContent = 'loading'; $('#formatState').textContent = `${(item.file.name.split('.').pop() || 'video').toUpperCase()} · reading`; $('#metricResolution').textContent = '—'; $('#metricDuration').textContent = '—'; $('#metricSize').textContent = formatSize(item.file.size); $('#time').textContent = '00:00 / 00:00'; $('#progress').style.width = '0%'; renderQueue(); if (autoplay) video.play().catch(() => {}); updatePlayIcon(); focusStage(); };
+    const playVideo = async () => {
+      setupAudioGraph();
+      if (audioContext?.state === 'suspended') await audioContext.resume().catch(() => {});
+      try { await video.play(); } catch { toast('Playback was blocked. Press play again.'); }
+    };
+    const selectTrack = (index, autoplay = false) => { const item = playlist[index]; if (!item) return; activeIndex = index; item.duration = ''; video.pause(); video.removeAttribute('src'); video.load(); video.src = item.url; video.load(); video.classList.remove('hidden'); $('#emptyState').classList.add('hidden'); $('#title').textContent = item.file.name.replace(/\.[^.]+$/, ''); $('#subtitle').textContent = `${item.file.type || 'video'} · ${formatSize(item.file.size)} · browser-local`; $('#readyState').textContent = 'loading'; $('#formatState').textContent = `${(item.file.name.split('.').pop() || 'video').toUpperCase()} · reading`; $('#metricResolution').textContent = '—'; $('#metricDuration').textContent = '—'; $('#metricSize').textContent = formatSize(item.file.size); $('#time').textContent = '00:00 / 00:00'; $('#progress').style.width = '0%'; renderQueue(); if (autoplay) playVideo(); updatePlayIcon(); focusStage(); };
     const addFiles = (fileList) => { const valid = [...fileList].filter((file) => file.type.startsWith('video/') || /\.(mp4|mov|webm|m4v|ogv|mkv)$/i.test(file.name)); if (!valid.length) { toast('Choose a browser-readable video file.'); return; } valid.forEach((file) => playlist.push({ file, url: URL.createObjectURL(file), duration: '' })); const firstNew = playlist.length - valid.length; renderQueue(); if (activeIndex === -1) selectTrack(firstNew, false); toast(`${valid.length} file${valid.length === 1 ? '' : 's'} added to the library.`); };
     fileInput.addEventListener('change', (event) => { addFiles(event.target.files); event.target.value = ''; }); $('#browse').addEventListener('click', () => fileInput.click()); $('#emptyBrowse').addEventListener('click', () => fileInput.click()); $('#addMore').addEventListener('click', () => fileInput.click());
     ['dragover', 'drop'].forEach((type) => document.addEventListener(type, (event) => event.preventDefault())); ['dragenter', 'dragover'].forEach((type) => $('#drop').addEventListener(type, (event) => { event.preventDefault(); $('#drop').classList.add('dragging'); })); ['dragleave', 'drop'].forEach((type) => $('#drop').addEventListener(type, (event) => { event.preventDefault(); $('#drop').classList.remove('dragging'); })); $('#drop').addEventListener('drop', (event) => addFiles(event.dataTransfer.files));
-    $('#playBtn').addEventListener('click', () => { if (!video.src) { fileInput.click(); return; } setupAudioGraph(); video.paused ? video.play() : video.pause(); focusStage(); }); video.addEventListener('play', () => { setupAudioGraph(); updatePlayIcon(); }); video.addEventListener('pause', updatePlayIcon);
+    $('#playBtn').addEventListener('click', async () => { if (!video.src) { fileInput.click(); return; } if (video.paused) await playVideo(); else video.pause(); focusStage(); }); video.addEventListener('play', () => { setupAudioGraph(); updatePlayIcon(); }); video.addEventListener('pause', updatePlayIcon);
     video.addEventListener('loadedmetadata', () => { const item = playlist[activeIndex]; if (item) item.duration = formatTime(video.duration); $('#metricResolution').textContent = `${video.videoWidth}×${video.videoHeight}`; $('#metricDuration').textContent = formatTime(video.duration); $('#formatState').textContent = `${(item?.file.name.split('.').pop() || 'video').toUpperCase()} · ready`; renderQueue(); if (activeIndex >= 0) toast('Ready to play.'); });
     video.addEventListener('error', () => { const item = playlist[activeIndex]; if (!item) return; item.duration = ''; const isMkv = /\.mkv$/i.test(item.file.name) || item.file.type === 'video/x-matroska'; $('#readyState').textContent = 'needs conversion'; $('#formatState').textContent = `${isMkv ? 'MKV' : 'VIDEO'} · unsupported`; $('#metricResolution').textContent = '—'; $('#metricDuration').textContent = '—'; $('#time').textContent = '00:00 / 00:00'; $('#progress').style.width = '0%'; $('#subtitle').textContent = isMkv ? 'MKV is loaded, but this browser cannot decode its current codec. Convert to MP4 / H.264 for playback.' : 'This video format or codec is not supported by the current browser.'; renderQueue(); toast(isMkv ? 'MKV detected — browser decode support varies.' : 'This video codec is not supported here.'); });
     video.addEventListener('timeupdate', () => { const percent = video.duration ? video.currentTime / video.duration * 100 : 0; $('#progress').style.width = `${percent}%`; $('#time').textContent = `${formatTime(video.currentTime)} / ${formatTime(video.duration)}`; }); video.addEventListener('ended', () => { if (activeIndex < playlist.length - 1) selectTrack(activeIndex + 1, true); });
     const seekFromPointer = (event) => { if (!video.duration) return; const bounds = $('#scrubber').getBoundingClientRect(); const ratio = Math.min(1, Math.max(0, (event.clientX - bounds.left) / bounds.width)); video.currentTime = ratio * video.duration; };
     $('#scrubber').addEventListener('pointerdown', (event) => { if (!video.duration) return; event.currentTarget.setPointerCapture?.(event.pointerId); seekFromPointer(event); }); $('#scrubber').addEventListener('pointermove', (event) => { if (event.currentTarget.hasPointerCapture?.(event.pointerId)) seekFromPointer(event); }); $('#scrubber').addEventListener('click', seekFromPointer); $('#backBtn').addEventListener('click', () => { video.currentTime = Math.max(0, video.currentTime - 10); focusStage(); }); $('#forwardBtn').addEventListener('click', () => { video.currentTime = Math.min(video.duration || 0, video.currentTime + 10); focusStage(); }); $('#volume').addEventListener('input', (event) => { video.volume = event.target.value; }); $('#muteBtn').addEventListener('click', () => { video.muted = !video.muted; toast(video.muted ? 'Sound muted.' : 'Sound on.'); focusStage(); });
     const speeds = [.75, 1, 1.25, 1.5, 2]; $('#speedBtn').addEventListener('click', () => { speed = speeds[(speeds.indexOf(speed) + 1) % speeds.length]; video.playbackRate = speed; $('#speedBtn').textContent = `${speed}×`; toast(`Playback speed ${speed}×`); focusStage(); }); $('#pipBtn').addEventListener('click', async () => { if (document.pictureInPictureEnabled && video.src) { try { await video.requestPictureInPicture(); } catch {} } else toast('Picture in picture is unavailable here.'); focusStage(); }); $('#fullscreenBtn').addEventListener('click', () => { document.fullscreenElement ? document.exitFullscreen() : $('#stage').requestFullscreen?.(); focusStage(); });
+    document.addEventListener('visibilitychange', () => { if (document.hidden) stopVisualizer(); else if (!video.paused) startVisualizer(); });
     document.addEventListener('click', (event) => { if (event.target.closest('button')) setTimeout(focusStage, 0); });
     document.addEventListener('keydown', (event) => { if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) return; if (event.code === 'Space') { event.preventDefault(); $('#playBtn').click(); } if (event.key === 'ArrowLeft') { event.preventDefault(); $('#backBtn').click(); } if (event.key === 'ArrowRight') { event.preventDefault(); $('#forwardBtn').click(); } if (event.key.toLowerCase() === 'f') $('#fullscreenBtn').click(); if (event.key.toLowerCase() === 'm') $('#muteBtn').click(); });
     window.addEventListener('beforeunload', () => playlist.forEach(revokeItemUrl));
