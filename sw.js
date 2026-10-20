@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pixelplayer-web-v6';
+const CACHE_NAME = 'pixelplayer-web-v7';
 const APP_SHELL = ['./', './index.html', './manifest.json', './prism-icon.svg', './apple-touch-icon.png', './icon-192.png', './icon-512.png'];
 
 const cacheResponse = (event, request, response) => {
@@ -10,7 +10,7 @@ const cacheResponse = (event, request, response) => {
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
-  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL)));
+  event.waitUntil(caches.open(CACHE_NAME).then((cache) => Promise.all(APP_SHELL.map((asset) => fetch(asset).then((response) => response.ok ? cache.put(asset, response) : null).catch(() => null)))));
 });
 
 self.addEventListener('activate', (event) => {
