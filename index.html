@@ -383,7 +383,7 @@
     document.addEventListener('visibilitychange', () => { if (document.hidden) saveActivePosition(); });
     window.addEventListener('pagehide', saveActivePosition);
     window.addEventListener('beforeunload', () => playlist.forEach(revokeItemUrl));
-    if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('./sw.js?v=6', { updateViaCache: 'none' }).catch(() => {});
+    if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('./sw.js?v=8', { updateViaCache: 'none' }).catch(() => {});
     renderQueue();
 
   </script>
