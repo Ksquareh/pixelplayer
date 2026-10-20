@@ -261,18 +261,22 @@
     const addFiles = (fileList) => { const valid = [...fileList].filter((file) => file.type.startsWith('video/') || /\.(mp4|mov|webm|m4v|ogv|mkv)$/i.test(file.name)); if (!valid.length) { toast('Choose a browser-readable video file.'); return; } valid.forEach((file) => playlist.push({ file, url: URL.createObjectURL(file), duration: '' })); const firstNew = playlist.length - valid.length; renderQueue(); if (activeIndex === -1) selectTrack(firstNew, false); toast(`${valid.length} file${valid.length === 1 ? '' : 's'} added to the library.`); };
     fileInput.addEventListener('change', (event) => { addFiles(event.target.files); event.target.value = ''; }); $('#browse').addEventListener('click', () => fileInput.click()); $('#emptyBrowse').addEventListener('click', () => fileInput.click()); $('#addMore').addEventListener('click', () => fileInput.click());
     ['dragover', 'drop'].forEach((type) => document.addEventListener(type, (event) => event.preventDefault())); ['dragenter', 'dragover'].forEach((type) => $('#drop').addEventListener(type, (event) => { event.preventDefault(); $('#drop').classList.add('dragging'); })); ['dragleave', 'drop'].forEach((type) => $('#drop').addEventListener(type, (event) => { event.preventDefault(); $('#drop').classList.remove('dragging'); })); $('#drop').addEventListener('drop', (event) => addFiles(event.dataTransfer.files));
-    $('#playBtn').addEventListener('click', async () => { if (!video.src) { fileInput.click(); return; } if (video.paused) await playVideo(); else video.pause(); focusStage(); }); video.addEventListener('play', () => { setupAudioGraph(); updatePlayIcon(); }); video.addEventListener('pause', updatePlayIcon);
+    $('#playBtn').addEventListener('click', async () => { if (!video.src) { fileInput.click(); return; } if (video.paused) await playVideo(); else video.pause(); focusStage(); }); video.addEventListener('play', () => { setupAudioGraph(); updatePlayIcon(); }); video.addEventListener('pause', () => { updatePlayIcon(); if (video.src && video.readyState >= 2) $('#readyState').textContent = 'paused'; });
     video.addEventListener('loadedmetadata', () => {
       const item = playlist[activeIndex];
       if (item) item.duration = formatTime(video.duration);
       const limitedFirefoxVideo = isFirefox && isLikelyHevc(item?.file);
+      $('#readyState').textContent = 'metadata';
       $('#metricResolution').textContent = `${video.videoWidth}×${video.videoHeight}`;
       $('#metricDuration').textContent = formatTime(video.duration);
       $('#formatState').textContent = `${(item?.file.name.split('.').pop() || 'video').toUpperCase()} · ready`;
       if (limitedFirefoxVideo) $('#subtitle').textContent = 'Firefox may play this file\'s audio without rendering its HEVC / 10-bit video frames. Convert it to H.264 MP4 for reliable playback.';
       renderQueue();
-      if (activeIndex >= 0) toast(limitedFirefoxVideo ? 'Firefox may not render this HEVC / 10-bit video.' : 'Ready to play.');
+      if (activeIndex >= 0) toast(limitedFirefoxVideo ? 'Firefox may not render HEVC / 10-bit video frames.' : 'Metadata loaded.');
     });
+    video.addEventListener('loadeddata', () => { $('#readyState').textContent = 'ready'; });
+    video.addEventListener('playing', () => { $('#readyState').textContent = 'playing'; });
+    video.addEventListener('waiting', () => { if (!video.paused) $('#readyState').textContent = 'buffering'; });
     video.addEventListener('error', () => { const item = playlist[activeIndex]; if (!item) return; item.duration = ''; const isMkv = /\.mkv$/i.test(item.file.name) || item.file.type === 'video/x-matroska'; $('#readyState').textContent = 'needs conversion'; $('#formatState').textContent = `${isMkv ? 'MKV' : 'VIDEO'} · unsupported`; $('#metricResolution').textContent = '—'; $('#metricDuration').textContent = '—'; $('#time').textContent = '00:00 / 00:00'; $('#progress').style.width = '0%'; $('#subtitle').textContent = isMkv ? 'MKV is loaded, but this browser cannot decode its current codec. Convert to MP4 / H.264 for playback.' : 'This video format or codec is not supported by the current browser.'; renderQueue(); toast(isMkv ? 'MKV detected — browser decode support varies.' : 'This video codec is not supported here.'); });
     video.addEventListener('timeupdate', () => { const percent = video.duration ? video.currentTime / video.duration * 100 : 0; $('#progress').style.width = `${percent}%`; $('#time').textContent = `${formatTime(video.currentTime)} / ${formatTime(video.duration)}`; }); video.addEventListener('ended', () => { if (activeIndex < playlist.length - 1) selectTrack(activeIndex + 1, true); });
     const seekFromPointer = (event) => { if (!video.duration) return; const bounds = $('#scrubber').getBoundingClientRect(); const ratio = Math.min(1, Math.max(0, (event.clientX - bounds.left) / bounds.width)); video.currentTime = ratio * video.duration; };
